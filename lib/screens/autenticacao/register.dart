@@ -1,10 +1,15 @@
+import 'dart:ffi';
+import 'dart:io';
+import 'dart:math';
 import 'package:brasil_fields/brasil_fields.dart';
+import 'package:bytebank/components/biometria.dart';
 import 'package:bytebank/models/cliente.dart';
 import 'package:bytebank/screens/dashboard/dashboard.dart';
 import 'package:date_time_picker/date_time_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flux_validator_dart/flux_validator_dart.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 class Register extends StatelessWidget {
@@ -28,6 +33,7 @@ class Register extends StatelessWidget {
   final TextEditingController _senhaController = TextEditingController();
   final TextEditingController _confirmaSenhaController =
       TextEditingController();
+  final ImagePicker _picker = ImagePicker();
 
   @override
   Widget build(BuildContext context) {
@@ -68,6 +74,7 @@ class Register extends StatelessWidget {
             currentStep: value.stepAtual,
             onStepContinue: () {
               final functions = [_salvarStep1, _salvarStep2, _salvarStep3];
+
               return functions[value.stepAtual](context);
             },
             onStepCancel: () {
@@ -97,6 +104,7 @@ class Register extends StatelessWidget {
   void _salvarStep3(context) {
     if (_formUserAuth.currentState!.validate()) {
       FocusScope.of(context).unfocus();
+      Provider.of<Cliente>(context).imagemRG = null;
       Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(
@@ -118,7 +126,7 @@ class Register extends StatelessWidget {
   List<Step> _construirSteps(BuildContext context, Cliente cliente) {
     List<Step> steps = [
       Step(
-        title: Text('Seus dados'),
+        title: Text('Dados'),
         isActive: cliente.stepAtual >= 0,
         content: Form(
           key: _formUserData,
@@ -184,8 +192,8 @@ class Register extends StatelessWidget {
         ),
       ),
       Step(
-          title: Text('Dados endereço'),
-          isActive: cliente.stepAtual >= 2,
+          title: Text('Endereço'),
+          isActive: cliente.stepAtual >= 1,
           content: Form(
               child: Form(
             key: _formUserAddress,
@@ -200,7 +208,7 @@ class Register extends StatelessWidget {
                       Validator.cep(value) ? 'CEP inválido' : null,
                   inputFormatters: [
                     FilteringTextInputFormatter.digitsOnly,
-                    CepInputFormatter()
+                    CepInputFormatter(ponto: false)
                   ],
                 ),
                 DropdownButtonFormField(
@@ -261,7 +269,7 @@ class Register extends StatelessWidget {
           ))),
       Step(
           title: Text('Autenticação'),
-          isActive: cliente.stepAtual >= 3,
+          isActive: cliente.stepAtual >= 2,
           content: Form(
               key: _formUserAuth,
               child: Column(
@@ -287,6 +295,21 @@ class Register extends StatelessWidget {
                           _senhaController.text) return 'Senhas não conferem';
                     },
                   ),
+                  SizedBox(
+                    height: 15,
+                  ),
+                  Text(
+                    'Para prosseguir com seu cadastro é necessário que \n tenhamos uma foto do seu RG',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(
+                    height: 15,
+                  ),
+                  ElevatedButton(
+                      onPressed: () => _capturarRg(cliente),
+                      child: Text('Tirar foto do meu RG')),
+                  _isSentRG(context) ? _imagemRG(context) : _pedidoRG(context),
+                  Biometria()
                 ],
               )))
     ];
@@ -295,5 +318,29 @@ class Register extends StatelessWidget {
 
   void irPara(int step, Cliente cliente) {
     cliente.stepAtual = step;
+  }
+
+  _capturarRg(Cliente cliente) async {
+    final pickedImage = await _picker.pickImage(source: ImageSource.camera);
+    cliente.imagemRG = pickedImage != null ? File(pickedImage.path) : null;
+  }
+
+  _imagemRG(BuildContext context) =>
+      Image.file(Provider.of<Cliente>(context).imagemRG!);
+
+  _isSentRG(BuildContext context) =>
+      Provider.of<Cliente>(context).imagemRG != null;
+
+  _pedidoRG(BuildContext context) {
+    return Column(
+      children: [
+        SizedBox(
+          height: 15,
+        ),
+        Text('Foto do RG pendente',
+            style: TextStyle(
+                color: Colors.red, fontWeight: FontWeight.bold, fontSize: 15)),
+      ],
+    );
   }
 }

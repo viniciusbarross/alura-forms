@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 class Cliente extends ChangeNotifier {
@@ -15,10 +17,29 @@ class Cliente extends ChangeNotifier {
   late String _senha;
 
   int stepAtual = 0;
+  File? _imagemRG;
+  bool? _biometria = false;
+
+  get biometria => this._biometria;
+
+  set biometria(value) {
+    this._biometria = value;
+    notifyListeners();
+  }
+
+  File? get imagemRG => this._imagemRG;
+
+  set imagemRG(File? value) {
+    this._imagemRG = value;
+    notifyListeners();
+  }
 
   get getStepAtual => this.stepAtual;
 
-  set setStepAtual(stepAtual) => this.stepAtual = stepAtual;
+  set setStepAtual(stepAtual) {
+    this.stepAtual = stepAtual;
+    notifyListeners();
+  }
 
   get nome => this._nome;
 

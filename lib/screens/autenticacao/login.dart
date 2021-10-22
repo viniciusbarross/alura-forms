@@ -93,12 +93,14 @@ class Login extends StatelessWidget {
                                 MaterialStateProperty.all<Color>(Colors.white)),
                         onPressed: () {
                           if (_formKey.currentState!.validate()) {
-                            Navigator.pushAndRemoveUntil(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => Dashboard(),
-                                ),
-                                (route) => false);
+                            if (_cpfcontroller.text == '267.168.570-01' &&
+                                _senhacontroller.text == '123')
+                              Navigator.pushAndRemoveUntil(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => Dashboard(),
+                                  ),
+                                  (route) => false);
                           }
                         },
                         child: Text(
